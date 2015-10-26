@@ -30,12 +30,11 @@ function Ask(options) {
   }
 
   this.options = options || {};
-  this.questions = utils.questions(this.options.questions);
-
   var store = this.options.store;
   var name = store && store.name;
   if (!name) name = 'ask-once.' + utils.project(process.cwd());
 
+  this.questions = utils.questions(this.options.questions);
   this.answers = utils.store(name, store);
   this.previous = utils.store(name + '.previous', this.answers.options);
 
@@ -143,18 +142,26 @@ Ask.prototype.once = function (key, options, cb) {
 
   // if an answer already exists, just return it
   if (typeof answer !== 'undefined') {
-    return cb(null, answer);
+    process.nextTick(function () {
+      cb(null, answer);
+    });
+    return this;
   }
 
   var question = this.getQuestion(key, prevAnswer);
-  this.questions.ask(question, function (err, answers) {
+
+  function ask(err, answers) {
     if (err) return cb(err);
     answer = utils.get(answers, key);
-
     // set answer to store
     self.set(key, answer);
     cb(null, answer);
-  });
+  }
+
+  process.nextTick(function () {
+    this.questions.ask(question, ask);
+  }.bind(this));
+  return this;
 };
 
 /**

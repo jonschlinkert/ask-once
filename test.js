@@ -148,6 +148,19 @@ describe('ask-once', function () {
     });
   });
 
+  it('should be chainable', function (done) {
+    ask
+      .set('eee', 'fff')
+      .del('eee')
+      .set('eee', 'bbb')
+      .once('eee', {eee: 'zzz'}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert(answer === 'zzz');
+        done();
+      })
+  });
+
   it('should return from `defaults` when answer is not an object', function () {
     assert(typeof ask.defaults('foo', 'bar', 'baz') === 'undefined');
   });
